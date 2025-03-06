@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"go-interpreter.com/m/lexer"
-	"go-interpreter.com/m/token"
+	"go-interpreter.com/m/parser"
 )
 
 func Start(in io.Reader, out io.Writer) {
@@ -19,8 +19,18 @@ func Start(in io.Reader, out io.Writer) {
 
 		line := scanner.Text()
 		l := lexer.New(line)
-		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-			_, _ = fmt.Fprintf(out, "%+v\n", tok)
+		p := parser.New(l)
+		program := p.ParseProgram()
+		if len(p.Errors) != 0 {
+			printParserErrors(out, p.Errors)
 		}
+
+		_, _ = fmt.Fprintf(out, "%+v\n", program.String())
+	}
+}
+
+func printParserErrors(out io.Writer, errors []error) {
+	for _, msg := range errors {
+		io.WriteString(out, "\t"+msg.Error()+"\n")
 	}
 }
