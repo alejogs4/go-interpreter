@@ -2,9 +2,9 @@ package repl
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 
+	"go-interpreter.com/m/evaluator"
 	"go-interpreter.com/m/lexer"
 	"go-interpreter.com/m/parser"
 )
@@ -12,11 +12,11 @@ import (
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 	for {
+		io.WriteString(out, ">> ")
 		scanned := scanner.Scan()
 		if !scanned {
 			return
 		}
-
 		line := scanner.Text()
 		l := lexer.New(line)
 		p := parser.New(l)
@@ -25,7 +25,11 @@ func Start(in io.Reader, out io.Writer) {
 			printParserErrors(out, p.Errors)
 		}
 
-		_, _ = fmt.Fprintf(out, "%+v\n", program.String())
+		evaluated := evaluator.Eval(program)
+		if evaluated != nil {
+			io.WriteString(out, evaluated.Inspect())
+			io.WriteString(out, "\n")
+		}
 	}
 }
 
